@@ -36,8 +36,21 @@ class UserRepository:
         self.db.commit()
         return follow
 
+    def unfollow(self, follower_id: int, followed_id: int):
+        follow = self.db.query(models.Follow).filter(
+            models.Follow.follower_id == follower_id,
+            models.Follow.followed_id == followed_id
+        ).first()
+        if follow:
+            self.db.delete(follow)
+            self.db.commit()
+        return True
+
     def is_following(self, follower_id: int, followed_id: int):
         return self.db.query(models.Follow).filter(
             models.Follow.follower_id == follower_id,
             models.Follow.followed_id == followed_id
         ).first() is not None
+
+    def search_users(self, query: str, skip: int = 0, limit: int = 10):
+        return self.db.query(models.User).filter(models.User.username.ilike(f"%{query}%")).offset(skip).limit(limit).all()

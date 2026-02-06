@@ -27,7 +27,13 @@ class UserService:
         if follower_id == followed_id:
             raise ValueError("Cannot follow yourself")
         if self.user_repo.is_following(follower_id, followed_id):
-             # idempotent or raise error? let's just return current state or follow object
-             # For now, just follow
-             pass
+             return # Idempotent
         return self.user_repo.follow(follower_id, followed_id)
+
+    def unfollow_user(self, follower_id: int, followed_id: int):
+        if not self.user_repo.is_following(follower_id, followed_id):
+            return # Idempotent
+        return self.user_repo.unfollow(follower_id, followed_id)
+
+    def search_users(self, query: str, skip: int = 0, limit: int = 10):
+        return self.user_repo.search_users(query, skip, limit)

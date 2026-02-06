@@ -36,6 +36,15 @@ def create_user(
 async def read_users_me(current_user: schemas.User = Depends(deps.get_current_user)):
     return current_user
 
+@router.get("/search", response_model=List[schemas.User])
+def search_users(
+    q: str,
+    skip: int = 0, 
+    limit: int = 10, 
+    user_service: UserService = Depends(deps.get_user_service)
+):
+    return user_service.search_users(q, skip, limit)
+
 @router.get("/{username}", response_model=schemas.User)
 def read_user(
     username: str, 
@@ -62,6 +71,20 @@ async def follow_user(
         raise HTTPException(status_code=400, detail=str(e))
     
     await manager.send_personal_message(f"{current_user.username} te ha seguido", target_user.id)
+    
+    return {"status": "ok"}
+
+@router.post("/{username}/unfollow")
+async def unfollow_user(
+    username: str, 
+    current_user: schemas.User = Depends(deps.get_current_user),
+    user_service: UserService = Depends(deps.get_user_service)
+):
+    target_user = user_service.get_user_by_username(username)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user_service.unfollow_user(current_user.id, target_user.id)
     
     return {"status": "ok"}
 

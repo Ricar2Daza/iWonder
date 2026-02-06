@@ -40,7 +40,7 @@ alembic upgrade head
 cd ..
 
 # Iniciar servidor
-uvicorn back.main:app --reload
+uvicorn main:app --reload
 ```
 El backend estará disponible en: http://127.0.0.1:8000
 Documentación interactiva: http://127.0.0.1:8000/docs

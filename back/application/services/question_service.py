@@ -25,3 +25,15 @@ class QuestionService:
 
     def get_question(self, question_id: int):
         return self.question_repo.get_question_by_id(question_id)
+
+    def delete_question(self, question_id: int, user_id: int):
+        question = self.get_question(question_id)
+        if not question:
+            raise ValueError("Question not found")
+        
+        # Allow deletion if user is the receiver (it's on their profile or inbox)
+        # We could also allow asker to delete if it's not answered yet, but requirement focuses on receiver
+        if question.receiver_id != user_id:
+             raise ValueError("Not authorized to delete this question")
+             
+        return self.question_repo.delete_question(question_id)

@@ -32,6 +32,14 @@ class User(Base):
         back_populates="follower"
     )
 
+    @property
+    def followers_count(self):
+        return len(self.followers)
+
+    @property
+    def following_count(self):
+        return len(self.following)
+
 class Question(Base):
     __tablename__ = "questions"
 

@@ -25,6 +25,8 @@ class UserLogin(BaseModel):
 class User(UserBase):
     id: int
     created_at: datetime
+    followers_count: int = 0
+    following_count: int = 0
 
     class Config:
         from_attributes = True

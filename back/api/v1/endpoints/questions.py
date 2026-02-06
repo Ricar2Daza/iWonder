@@ -61,3 +61,15 @@ def get_feed(
     question_service: QuestionService = Depends(deps.get_question_service)
 ):
     return question_service.get_feed(current_user.id, skip, limit)
+
+@router.delete("/{question_id}")
+def delete_question(
+    question_id: int,
+    current_user: schemas.User = Depends(deps.get_current_user),
+    question_service: QuestionService = Depends(deps.get_question_service)
+):
+    try:
+        question_service.delete_question(question_id, current_user.id)
+    except ValueError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    return {"status": "ok"}

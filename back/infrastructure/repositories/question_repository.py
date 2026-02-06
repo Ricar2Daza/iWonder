@@ -55,3 +55,17 @@ class QuestionRepository:
     
     def get_question_by_id(self, question_id: int):
         return self.db.query(models.Question).filter(models.Question.id == question_id).first()
+
+    def delete_question(self, question_id: int):
+        question = self.get_question_by_id(question_id)
+        if question:
+            # Manually delete answers if cascade is not set in DB (SQLAlchemy usually needs cascade='all, delete' in relationship or ON DELETE CASCADE in DB)
+            # Assuming DB might not have cascade set up perfect, let's explicit delete answers first? 
+            # Or rely on models. 
+            # Let's try simple delete. If it fails due to FK, we fix.
+            # Usually better to delete answers first.
+            self.db.query(models.Answer).filter(models.Answer.question_id == question_id).delete()
+            self.db.delete(question)
+            self.db.commit()
+            return True
+        return False
