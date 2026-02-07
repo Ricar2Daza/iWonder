@@ -25,11 +25,18 @@ class UserLogin(BaseModel):
 class User(UserBase):
     id: int
     created_at: datetime
-    followers_count: int = 0
-    following_count: int = 0
 
     class Config:
         from_attributes = True
+
+class UserProfile(User):
+    followers_count: int = 0
+    following_count: int = 0
+    is_following: Optional[bool] = None
+
+    class Config:
+        from_attributes = True
+
 
 # Question Schemas
 class QuestionBase(BaseModel):

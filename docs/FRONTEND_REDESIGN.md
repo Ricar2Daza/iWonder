@@ -1,7 +1,7 @@
 # Propuesta de Rediseño Frontend: Proyecto "Pixel Wonder"
 
 ## 1. Concepto Visual
-El rediseño del frontend adoptará una estética **Pixel Art (8-bit / 16-bit)**, evocando la nostalgia de los videojuegos retro y las interfaces de computadora de los años 80/90. Este estilo visual no solo es distintivo, sino que refuerza el carácter lúdico y de "exploración" de la plataforma iWonder.
+El rediseño del frontend adoptará una estética **Pixel Art (16-bit / 32-bit)**, evocando la nostalgia de los videojuegos retro y las interfaces de computadora de los años 2000. Este estilo visual no solo es distintivo, sino que refuerza el carácter lúdico y de "exploración" de la plataforma iWonder.
 
 ### Estilo: "Retro-Futurismo Lúdico"
 -   Interfaz basada en bloques y bordes gruesos.
@@ -78,10 +78,10 @@ Se recomienda utilizar **NES.css** (https://nostalgic-css.github.io/NES.css/), u
 -   **Axios**: Para consumo de la API REST de iWonder.
 -   **Socket.io-client**: Para las notificaciones en tiempo real.
 
-### 5.3 Mockup de Layout (Home)
+### 5.3 Mockup de Layout (Home) en tamaño responsive
 ```
 +-------------------------------------------------------+
-|  [LOGO: iWonder] (8-bit)        [Avatar] [Logout]     |
+|  [LOGO: iWonder] (16-bit / 32-bit)        [Avatar] [Logout]     |
 +-------------------------------------------------------+
 |                                                       |
 |  +-------------------+    +------------------------+  |

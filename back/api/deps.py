@@ -1,5 +1,5 @@
 
-from typing import Generator
+from typing import Generator, Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
@@ -58,4 +58,21 @@ def get_current_user(
     user = user_repo.get_by_username(username=token_data.username)
     if user is None:
         raise credentials_exception
+    return user
+
+def get_current_user_optional(
+    token: str = Depends(OAuth2PasswordBearer(tokenUrl="api/v1/auth/token", auto_error=False)),
+    user_repo: UserRepository = Depends(get_user_repository)
+) -> Optional[schemas.User]:
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            return None
+    except JWTError:
+        return None
+    
+    user = user_repo.get_by_username(username=username)
     return user
