@@ -24,10 +24,32 @@ class UserLogin(BaseModel):
 
 class User(UserBase):
     id: int
+    bio: Optional[str] = None
+    avatar_url: Optional[str] = None
     created_at: datetime
 
     class Config:
         from_attributes = True
+
+# Notification Schemas
+class NotificationBase(BaseModel):
+    content: str
+    notification_type: str = "info"
+
+class NotificationCreate(NotificationBase):
+    user_id: int
+
+class Notification(NotificationBase):
+    id: int
+    is_read: bool
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class UserUpdate(BaseModel):
+    bio: Optional[str] = None
+    avatar_url: Optional[str] = None
 
 class UserProfile(User):
     followers_count: int = 0
@@ -89,6 +111,23 @@ class AnswerDisplay(BaseModel):
     created_at: datetime
     question: QuestionDisplay
     author: User
+    likes_count: int = 0
+    is_liked: bool = False
+
+    class Config:
+        from_attributes = True
+
+class CommentBase(BaseModel):
+    content: str
+    answer_id: int
+
+class CommentCreate(CommentBase):
+    pass
+
+class Comment(CommentBase):
+    id: int
+    created_at: datetime
+    user: User
 
     class Config:
         from_attributes = True

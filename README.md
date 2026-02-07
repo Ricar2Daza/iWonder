@@ -32,12 +32,11 @@ Desde la raíz del proyecto:
 
 ```bash
 # Instalar dependencias
-pip install -r back/requirements.txt
-
-# Ejecutar migraciones (crear tablas)
 cd back
+pip install -r requirements.txt
+# Ejecutar migraciones (crear tablas)
+
 alembic upgrade head
-cd ..
 
 # Iniciar servidor
 uvicorn main:app --reload

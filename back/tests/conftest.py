@@ -10,12 +10,12 @@ from fastapi.testclient import TestClient
 import sys
 import os
 # Add the project root (parent of 'back') to sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
-from back.infrastructure.db.session import Base
+from infrastructure.db.session import Base
 
-from back.api.deps import get_db
-from back.main import app
+from api.deps import get_db
+from main import app
 
 # Use SQLite in-memory for tests
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"

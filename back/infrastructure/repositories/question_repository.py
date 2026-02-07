@@ -56,6 +56,9 @@ class QuestionRepository:
     def get_question_by_id(self, question_id: int):
         return self.db.query(models.Question).filter(models.Question.id == question_id).first()
 
+    def get_answer_by_id(self, answer_id: int):
+        return self.db.query(models.Answer).filter(models.Answer.id == answer_id).first()
+
     def delete_question(self, question_id: int):
         question = self.get_question_by_id(question_id)
         if question:
@@ -69,3 +72,24 @@ class QuestionRepository:
             self.db.commit()
             return True
         return False
+
+    def like_answer(self, user_id: int, answer_id: int):
+        # Check if already liked
+        existing = self.db.query(models.AnswerLike).filter(
+            models.AnswerLike.user_id == user_id, 
+            models.AnswerLike.answer_id == answer_id
+        ).first()
+        if existing:
+            return existing
+            
+        like = models.AnswerLike(user_id=user_id, answer_id=answer_id)
+        self.db.add(like)
+        self.db.commit()
+        return like
+
+    def unlike_answer(self, user_id: int, answer_id: int):
+        self.db.query(models.AnswerLike).filter(
+            models.AnswerLike.user_id == user_id,
+            models.AnswerLike.answer_id == answer_id
+        ).delete()
+        self.db.commit()

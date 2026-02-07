@@ -54,3 +54,17 @@ class UserRepository:
 
     def search_users(self, query: str, skip: int = 0, limit: int = 10):
         return self.db.query(models.User).filter(models.User.username.ilike(f"%{query}%")).offset(skip).limit(limit).all()
+
+    def update(self, user_id: int, user_update: schemas.UserUpdate):
+        db_user = self.get_by_id(user_id)
+        if not db_user:
+            return None
+        
+        update_data = user_update.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(db_user, key, value)
+            
+        self.db.add(db_user)
+        self.db.commit()
+        self.db.refresh(db_user)
+        return db_user

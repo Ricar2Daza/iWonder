@@ -9,9 +9,13 @@ from domain import schemas
 from infrastructure.db.session import SessionLocal
 from infrastructure.repositories.user_repository import UserRepository
 from infrastructure.repositories.question_repository import QuestionRepository
+from infrastructure.repositories.notification_repository import NotificationRepository
+from infrastructure.repositories.comment_repository import CommentRepository
 from application.services.user_service import UserService
 from application.services.question_service import QuestionService
 from application.services.auth_service import AuthService
+from application.services.notification_service import NotificationService
+from application.services.comment_service import CommentService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/token")
 
@@ -28,11 +32,34 @@ def get_user_repository(db: Session = Depends(get_db)) -> UserRepository:
 def get_question_repository(db: Session = Depends(get_db)) -> QuestionRepository:
     return QuestionRepository(db)
 
-def get_user_service(user_repo: UserRepository = Depends(get_user_repository)) -> UserService:
-    return UserService(user_repo)
+def get_notification_repository(db: Session = Depends(get_db)) -> NotificationRepository:
+    return NotificationRepository(db)
 
-def get_question_service(question_repo: QuestionRepository = Depends(get_question_repository)) -> QuestionService:
-    return QuestionService(question_repo)
+def get_comment_repository(db: Session = Depends(get_db)) -> CommentRepository:
+    return CommentRepository(db)
+
+def get_notification_service(notification_repo: NotificationRepository = Depends(get_notification_repository)) -> NotificationService:
+    return NotificationService(notification_repo)
+
+def get_user_service(
+    user_repo: UserRepository = Depends(get_user_repository),
+    notification_service: NotificationService = Depends(get_notification_service)
+) -> UserService:
+    return UserService(user_repo, notification_service)
+
+def get_question_service(
+    question_repo: QuestionRepository = Depends(get_question_repository),
+    notification_service: NotificationService = Depends(get_notification_service)
+) -> QuestionService:
+    return QuestionService(question_repo, notification_service)
+
+def get_comment_service(
+    comment_repo: CommentRepository = Depends(get_comment_repository),
+    question_repo: QuestionRepository = Depends(get_question_repository),
+    user_repo: UserRepository = Depends(get_user_repository),
+    notification_service: NotificationService = Depends(get_notification_service)
+) -> CommentService:
+    return CommentService(comment_repo, question_repo, user_repo, notification_service)
 
 def get_auth_service(user_repo: UserRepository = Depends(get_user_repository)) -> AuthService:
     return AuthService(user_repo)

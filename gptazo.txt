@@ -1,0 +1,98 @@
+Arquitectura base de iWonder
+
+Enfoque recomendado: Monolito modular bien diseñado (DDD ligero)
+
+Backend: FastAPI como núcleo del sistema
+Frontend: Next.js
+Base de datos: PostgreSQL como fuente única de verdad
+Subida de imágenes (portada): Cloudflare R2 (económico, sin costo de salida; solo se paga almacenamiento)
+El frontend sube directamente a R2 usando presigned URLs, El backend no maneja archivos pesados, En la base de datos solo se guarda metadata (URL, tipo, tamaño)
+
+Autenticación y seguridad
+MVP, JWT (access token + refresh token), Hash de contraseñas con bcrypt o argon2
+
+Escalado
+OAuth (Google, GitHub), Rate limiting
+
+Tecnologías
+FastAPI con OAuth2, Redis para sesiones, tokens revocados y rate limiting
+
+Preguntas anónimas (core del producto)
+
+Problemas reales a resolver
+Spam, Bots, Abuso, Toxicidad
+
+Recomendaciones
+Rate limiting por IP y por usuario, Publicación diferida (no todo es inmediato), Flags de moderación
+
+Tecnologías
+Redis para contadores y límites, Background jobs (Celery, RQ o Dramatiq), Notificaciones (likes, respuestas, comentarios)
+
+MVP
+Background jobs + base de datos
+
+Escala
+WebSockets o Server-Sent Events (SSE)
+
+Push notifications
+Tecnologías
+FastAPI WebSockets
+Redis Pub/Sub
+
+Cache (obligatorio en redes sociales)
+Redis es no negociable, Casos de uso, Cache de feeds, Cache de perfiles, Rate limiting, Feature flags
+
+Observabilidad
+Herramientas
+Prometheus: métricas, Grafana: dashboards
+
+Mensajería y colas
+
+MVP
+Background jobs simples
+RabbitMQ para colas clásicas
+
+Escala inicial (imprescindible):
+FastAPI, Next.js, PostgreSQL, Redis, Cloudflare R2, Background jobs, JWT, Logs, Despliegue simple
+
+Escala media
+WebSockets, Redis en cluster, Réplicas de lectura, CDN, Rate limiting avanzado
+
+Escala grande
+Microservicios, Event sourcing, Sharding, Data warehouse
+
+
+Stack final recomendado
+Backend
+FastAPI, Pydantic, SQLAlchemy, Alembic, Redis, Celery o RQ
+
+Frontend
+Next.js (App Router), SSR para SEO, Tailwind CSS + Shadcn UI
+
+Infraestructura
+Podman, Nginx, Cloudflare, Cloudflare R2, PostgreSQL administrado
+
+Observabilidad
+Prometheus, Grafana, Loki (logs)
+
+Despliegue recomendado
+Opción inicial
+VPS (Hetzner o DigitalOcean)
+Docker Compose pero con podman
+PostgreSQL administrado
+Cloudflare R2
+
+Cuando el proyecto crezca
+Kubernetes (opcional)
+CI/CD con GitHub Actions
+
+Ideas de senior que casi nadie aplica
+Feature flags desde el inicio (con Redis)
+Shadow banning para usuarios abusivos
+Escrituras diferidas para reducir spam
+Auditoría mínima (quién hizo qué y cuándo)
+
+Regla de oro final
+
+Un sistema exitoso no es el que usa más tecnologías,
+sino el que usa las correctas en el momento correcto.
