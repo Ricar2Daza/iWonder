@@ -68,3 +68,12 @@ class UserRepository:
         self.db.commit()
         self.db.refresh(db_user)
         return db_user
+
+    def update_password(self, user_id: int, hashed_password: str):
+        db_user = self.get_by_id(user_id)
+        if db_user:
+            db_user.hashed_password = hashed_password
+            self.db.add(db_user)
+            self.db.commit()
+            self.db.refresh(db_user)
+        return db_user

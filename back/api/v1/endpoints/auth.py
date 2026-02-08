@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from fastapi.security import OAuth2PasswordRequestForm
 from application.services.auth_service import AuthService
 from api import deps
@@ -21,3 +21,27 @@ async def login_for_access_token(
         )
     access_token = auth_service.create_token(user)
     return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/forgot-password")
+async def forgot_password(
+    request: schemas.PasswordResetRequest,
+    auth_service: AuthService = Depends(deps.get_auth_service)
+):
+    await auth_service.request_password_reset(request.email)
+    # Always return 200 OK even if email doesn't exist to prevent enumeration
+    return {"message": "If the email exists, a password reset link has been sent."}
+
+@router.post("/reset-password")
+async def reset_password(
+    request: schemas.PasswordResetConfirm,
+    auth_service: AuthService = Depends(deps.get_auth_service)
+):
+    if request.new_password != request.confirm_password:
+        raise HTTPException(status_code=400, detail="Passwords do not match")
+        
+    try:
+        auth_service.reset_password(request.token, request.new_password)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+        
+    return {"message": "Password has been reset successfully."}

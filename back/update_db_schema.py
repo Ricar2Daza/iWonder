@@ -16,6 +16,18 @@ def add_columns():
             print("Added avatar_url column")
         except Exception as e:
             print(f"Avatar_url column error (maybe exists): {e}")
+
+        try:
+            conn.execute(text("ALTER TABLE users ADD COLUMN avatar_content_type VARCHAR"))
+            print("Added avatar_content_type column")
+        except Exception as e:
+            print(f"Avatar_content_type column error (maybe exists): {e}")
+
+        try:
+            conn.execute(text("ALTER TABLE users ADD COLUMN avatar_size INTEGER"))
+            print("Added avatar_size column")
+        except Exception as e:
+            print(f"Avatar_size column error (maybe exists): {e}")
             
         conn.commit()
 

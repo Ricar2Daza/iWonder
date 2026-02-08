@@ -18,6 +18,20 @@ class UserCreate(UserBase):
             raise ValueError('Username must be alphanumeric')
         return v
 
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str = Field(..., min_length=8)
+    confirm_password: str = Field(..., min_length=8)
+
+    @field_validator('new_password')
+    def password_strong(cls, v):
+        if not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$', v):
+            raise ValueError('Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character')
+        return v
+
 class UserLogin(BaseModel):
     username: str
     password: str
@@ -26,6 +40,8 @@ class User(UserBase):
     id: int
     bio: Optional[str] = None
     avatar_url: Optional[str] = None
+    avatar_content_type: Optional[str] = None
+    avatar_size: Optional[int] = None
     created_at: datetime
 
     class Config:
@@ -50,6 +66,21 @@ class Notification(NotificationBase):
 class UserUpdate(BaseModel):
     bio: Optional[str] = None
     avatar_url: Optional[str] = None
+    avatar_content_type: Optional[str] = None
+    avatar_size: Optional[int] = None
+
+class AvatarPresignRequest(BaseModel):
+    filename: str
+    content_type: str
+    size: int
+
+class AvatarPresignResponse(BaseModel):
+    upload_url: str
+    public_url: str
+    key: str
+
+class AvatarCleanupRequest(BaseModel):
+    key: str
 
 class UserProfile(User):
     followers_count: int = 0

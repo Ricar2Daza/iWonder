@@ -1,0 +1,107 @@
+Lista de features – iWonder
+Leyenda: [✓] Implementado | [ ] Pendiente | [~] Parcial
+
+1. Autenticación y cuentas
+[✓] Registro de usuario
+[✓] Inicio de sesión
+[✓] Cierre de sesión
+[✓] Recuperación de contraseña
+[ ] Verificación de correo electrónico
+[ ] Cambio de contraseña
+[ ] Cierre de sesión en todos los dispositivos
+[ ] Eliminación de cuenta
+[ ] Desactivación temporal de cuenta
+
+2. Perfil de usuario
+[✓] Username único
+[✓] Foto de perfil
+[✓] Biografía corta
+[✓] URL pública del perfil
+Contadores:
+[ ] Preguntas recibidas
+[ ] Respuestas publicadas
+[ ] Likes recibidos
+[ ] Configuración de privacidad
+
+3. Preguntas (core del producto)
+[✓] Enviar preguntas a otros usuarios
+[✓] Preguntas anónimas
+[✓] Preguntas no anónimas
+[✓] Bandeja de preguntas pendientes
+[ ] Aceptar o rechazar preguntas
+[✓] Eliminar preguntas
+[ ] Bloquear usuarios que envían preguntas
+[ ] Activar o desactivar preguntas anónimas
+
+4. Respuestas
+[✓] Responder preguntas
+[ ] Editar respuestas
+[ ] Eliminar respuestas
+[✓] Respuestas públicas
+[ ] Respuestas privadas (opcional)
+
+5. Interacciones
+[✓] Dar like a respuestas
+[✓] Quitar like
+[✓] Contador de likes
+[✓] Comentarios en respuestas
+[✓] Eliminar comentarios
+[ ] (Opcional) Likes en comentarios
+
+6. Notificaciones
+[✓] Nueva pregunta recibida
+[ ] Pregunta aceptada o rechazada
+[ ] Nueva respuesta
+[✓] Nuevo comentario
+[ ] Nuevo like
+[✓] Notificaciones en tiempo real
+[ ] Notificaciones por correo electrónico (opt-in)
+[ ] (Futuro) Push notifications
+
+7. Feed y descubrimiento
+[✓] Feed personal (respuestas recientes)
+[ ] Feed público
+[ ] Respuestas más populares
+[ ] Usuarios destacados
+[ ] Tendencias por periodo
+
+8. Moderación y seguridad
+[ ] Reportar preguntas
+[ ] Reportar respuestas
+[ ] Reportar comentarios
+[ ] Sistema de estados de reporte
+[ ] Rate limiting por IP
+[ ] Rate limiting por usuario
+[ ] Shadow banning
+[ ] Captcha adaptativo
+[ ] Filtros de contenido
+[ ] Eliminación de contenido abusivo
+
+9. Privacidad y control
+[ ] Bloquear usuarios
+[ ] Ocultar perfil público
+[ ] Control de visibilidad de respuestas
+[ ] Configuración de notificaciones
+[ ] Control de anonimato
+
+10. Administración (backoffice)
+[ ] Panel de administración
+[ ] Gestión de usuarios
+[ ] Gestión de reportes
+[ ] Baneo temporal o permanente
+[ ] Eliminación de contenido
+[ ] Métricas globales
+
+11. Métricas y analítica
+[ ] Estadísticas por usuario
+[ ] Estadísticas de engagement
+[ ] Actividad diaria / semanal
+[ ] Contadores agregados
+[ ] Exportación de datos (admin)
+
+12. Retención y engagement
+[ ] Badges y logros
+[ ] Rachas de actividad (streaks)
+[ ] Resumen semanal por email
+[ ] Pregunta destacada del día
+[ ] Recordatorios de actividad

@@ -11,6 +11,7 @@ from infrastructure.repositories.user_repository import UserRepository
 from infrastructure.repositories.question_repository import QuestionRepository
 from infrastructure.repositories.notification_repository import NotificationRepository
 from infrastructure.repositories.comment_repository import CommentRepository
+from infrastructure.repositories.password_reset_repository import PasswordResetRepository
 from application.services.user_service import UserService
 from application.services.question_service import QuestionService
 from application.services.auth_service import AuthService
@@ -38,6 +39,9 @@ def get_notification_repository(db: Session = Depends(get_db)) -> NotificationRe
 def get_comment_repository(db: Session = Depends(get_db)) -> CommentRepository:
     return CommentRepository(db)
 
+def get_password_reset_repository(db: Session = Depends(get_db)) -> PasswordResetRepository:
+    return PasswordResetRepository(db)
+
 def get_notification_service(notification_repo: NotificationRepository = Depends(get_notification_repository)) -> NotificationService:
     return NotificationService(notification_repo)
 
@@ -61,8 +65,11 @@ def get_comment_service(
 ) -> CommentService:
     return CommentService(comment_repo, question_repo, user_repo, notification_service)
 
-def get_auth_service(user_repo: UserRepository = Depends(get_user_repository)) -> AuthService:
-    return AuthService(user_repo)
+def get_auth_service(
+    user_repo: UserRepository = Depends(get_user_repository),
+    password_reset_repo: PasswordResetRepository = Depends(get_password_reset_repository)
+) -> AuthService:
+    return AuthService(user_repo, password_reset_repo)
 
 def get_current_user(
     token: str = Depends(oauth2_scheme), 

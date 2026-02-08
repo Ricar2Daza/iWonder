@@ -13,6 +13,8 @@ class User(Base):
     hashed_password = Column(String)
     bio = Column(String, nullable=True)
     avatar_url = Column(String, nullable=True)
+    avatar_content_type = Column(String, nullable=True)
+    avatar_size = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Questions asked by this user
@@ -24,6 +26,7 @@ class User(Base):
     comments = relationship("Comment", back_populates="user")
     liked_answers = relationship("AnswerLike", back_populates="user")
     notifications = relationship("Notification", back_populates="user")
+    password_resets = relationship("PasswordReset", back_populates="user")
    
     # Follow system
     followers = relationship(
@@ -108,6 +111,19 @@ class AnswerLike(Base):
 
     user = relationship("User", back_populates="liked_answers")
     answer = relationship("Answer", back_populates="likes")
+
+
+class PasswordReset(Base):
+    __tablename__ = "password_resets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    token = Column(String, unique=True, index=True)
+    expires_at = Column(DateTime(timezone=True))
+    is_used = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="password_resets")
 
 class Notification(Base):
     __tablename__ = "notifications"
