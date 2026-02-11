@@ -1,5 +1,6 @@
 
 from sqlalchemy.orm import Session
+from datetime import datetime
 from ..db import models
 from domain import schemas
 
@@ -28,6 +29,18 @@ class QuestionRepository:
             .order_by(models.Question.created_at.desc())\
             .offset(skip).limit(limit).all()
 
+    def get_questions_received_before(self, user_id: int, before_created_at: datetime, before_id: int, limit: int = 10):
+        return self.db.query(models.Question)\
+            .outerjoin(models.Answer)\
+            .filter(models.Question.receiver_id == user_id)\
+            .filter(models.Answer.id == None)\
+            .filter(
+                (models.Question.created_at < before_created_at) |
+                ((models.Question.created_at == before_created_at) & (models.Question.id < before_id))
+            )\
+            .order_by(models.Question.created_at.desc(), models.Question.id.desc())\
+            .limit(limit).all()
+
     def create_answer(self, answer: schemas.AnswerCreate, author_id: int):
         db_answer = models.Answer(
             content=answer.content,
@@ -48,10 +61,31 @@ class QuestionRepository:
             .order_by(models.Answer.created_at.desc())\
             .offset(skip).limit(limit).all()
 
+    def get_feed_before(self, user_id: int, before_created_at: datetime, before_id: int, limit: int = 10):
+        following = self.db.query(models.Follow).filter(models.Follow.follower_id == user_id).all()
+        followed_ids = [f.followed_id for f in following]
+
+        return self.db.query(models.Answer).filter(models.Answer.author_id.in_(followed_ids))\
+            .filter(
+                (models.Answer.created_at < before_created_at) |
+                ((models.Answer.created_at == before_created_at) & (models.Answer.id < before_id))
+            )\
+            .order_by(models.Answer.created_at.desc(), models.Answer.id.desc())\
+            .limit(limit).all()
+
     def get_user_answers(self, user_id: int, skip: int = 0, limit: int = 10):
         return self.db.query(models.Answer).filter(models.Answer.author_id == user_id)\
             .order_by(models.Answer.created_at.desc())\
             .offset(skip).limit(limit).all()
+
+    def get_user_answers_before(self, user_id: int, before_created_at: datetime, before_id: int, limit: int = 10):
+        return self.db.query(models.Answer).filter(models.Answer.author_id == user_id)\
+            .filter(
+                (models.Answer.created_at < before_created_at) |
+                ((models.Answer.created_at == before_created_at) & (models.Answer.id < before_id))
+            )\
+            .order_by(models.Answer.created_at.desc(), models.Answer.id.desc())\
+            .limit(limit).all()
     
     def get_question_by_id(self, question_id: int):
         return self.db.query(models.Question).filter(models.Question.id == question_id).first()

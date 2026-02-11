@@ -2,27 +2,15 @@
 from infrastructure.repositories.user_repository import UserRepository
 from infrastructure.repositories.password_reset_repository import PasswordResetRepository
 from core.security import verify_password, create_access_token, get_password_hash
-from core.config import settings
 from domain import schemas
 from datetime import timedelta, datetime
 import uuid
 import logging
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from pydantic import EmailStr
+from infrastructure.cache.redis_queue import enqueue_job
+from infrastructure.mail.reset_email import send_reset_email
 
 logger = logging.getLogger(__name__)
-
-conf = ConnectionConfig(
-    MAIL_USERNAME=settings.MAIL_USERNAME,
-    MAIL_PASSWORD=settings.MAIL_PASSWORD,
-    MAIL_FROM=settings.MAIL_FROM,
-    MAIL_PORT=settings.MAIL_PORT,
-    MAIL_SERVER=settings.MAIL_SERVER,
-    MAIL_STARTTLS=settings.MAIL_STARTTLS,
-    MAIL_SSL_TLS=settings.MAIL_SSL_TLS,
-    USE_CREDENTIALS=settings.USE_CREDENTIALS,
-    VALIDATE_CERTS=settings.VALIDATE_CERTS
-)
 
 class AuthService:
     def __init__(self, user_repo: UserRepository, password_reset_repo: PasswordResetRepository):
@@ -61,34 +49,9 @@ class AuthService:
         
         self.password_reset_repo.create(user.id, token, expires_at)
         
-        # Send email
-        await self._send_reset_email(email, token)
-
-    async def _send_reset_email(self, email: str, token: str):
-        reset_link = f"http://localhost:3000/reset-password?token={token}"
-        
-        html = f"""
-        <p>Has solicitado restablecer tu contraseña en iWonder.</p>
-        <p>Haz clic en el siguiente enlace para continuar:</p>
-        <p><a href="{reset_link}">{reset_link}</a></p>
-        <p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
-        <p>Este enlace expirará en 1 hora.</p>
-        """
-
-        message = MessageSchema(
-            subject="Restablecimiento de Contraseña - iWonder",
-            recipients=[email],
-            body=html,
-            subtype=MessageType.html
-        )
-
-        fm = FastMail(conf)
-        try:
-            await fm.send_message(message)
-        except Exception as e:
-            logger.error(f"Error sending email: {e}")
-            # Fallback to console for development if email fails (e.g. bad credentials)
-            print(f"FAILED TO SEND EMAIL. Link: {reset_link}")
+        queued = enqueue_job("email_queue", {"type": "reset_password", "email": email, "token": token})
+        if not queued:
+            await send_reset_email(email, token)
 
     def reset_password(self, token: str, new_password: str):
         reset = self.password_reset_repo.get_by_token(token)

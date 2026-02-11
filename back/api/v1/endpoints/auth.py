@@ -1,17 +1,22 @@
 
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Body, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from application.services.auth_service import AuthService
 from api import deps
 from domain import schemas
+from infrastructure.cache.rate_limit import is_rate_limited
 
 router = APIRouter()
 
 @router.post("/token", response_model=schemas.Token)
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    auth_service: AuthService = Depends(deps.get_auth_service)
+    auth_service: AuthService = Depends(deps.get_auth_service),
+    request: Request = None
 ):
+    client_ip = request.client.host if request and request.client else "unknown"
+    if is_rate_limited(f"rl:login:{client_ip}", 8, 60):
+        raise HTTPException(status_code=429, detail="Too many attempts")
     user = auth_service.authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(

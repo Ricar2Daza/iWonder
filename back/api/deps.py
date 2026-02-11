@@ -12,11 +12,17 @@ from infrastructure.repositories.question_repository import QuestionRepository
 from infrastructure.repositories.notification_repository import NotificationRepository
 from infrastructure.repositories.comment_repository import CommentRepository
 from infrastructure.repositories.password_reset_repository import PasswordResetRepository
+from infrastructure.repositories.conversation_repository import ConversationRepository
+from infrastructure.repositories.message_repository import MessageRepository
+from infrastructure.repositories.user_block_repository import UserBlockRepository
+from infrastructure.repositories.answer_report_repository import AnswerReportRepository
 from application.services.user_service import UserService
 from application.services.question_service import QuestionService
 from application.services.auth_service import AuthService
 from application.services.notification_service import NotificationService
 from application.services.comment_service import CommentService
+from application.services.message_service import MessageService
+from application.services.answer_report_service import AnswerReportService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/token")
 
@@ -42,14 +48,28 @@ def get_comment_repository(db: Session = Depends(get_db)) -> CommentRepository:
 def get_password_reset_repository(db: Session = Depends(get_db)) -> PasswordResetRepository:
     return PasswordResetRepository(db)
 
+def get_conversation_repository(db: Session = Depends(get_db)) -> ConversationRepository:
+    return ConversationRepository(db)
+
+def get_message_repository(db: Session = Depends(get_db)) -> MessageRepository:
+    return MessageRepository(db)
+
+def get_user_block_repository(db: Session = Depends(get_db)) -> UserBlockRepository:
+    return UserBlockRepository(db)
+
+def get_answer_report_repository(db: Session = Depends(get_db)) -> AnswerReportRepository:
+    return AnswerReportRepository(db)
+
+
 def get_notification_service(notification_repo: NotificationRepository = Depends(get_notification_repository)) -> NotificationService:
     return NotificationService(notification_repo)
 
 def get_user_service(
     user_repo: UserRepository = Depends(get_user_repository),
-    notification_service: NotificationService = Depends(get_notification_service)
+    notification_service: NotificationService = Depends(get_notification_service),
+    block_repo: UserBlockRepository = Depends(get_user_block_repository)
 ) -> UserService:
-    return UserService(user_repo, notification_service)
+    return UserService(user_repo, notification_service, block_repo)
 
 def get_question_service(
     question_repo: QuestionRepository = Depends(get_question_repository),
@@ -64,6 +84,21 @@ def get_comment_service(
     notification_service: NotificationService = Depends(get_notification_service)
 ) -> CommentService:
     return CommentService(comment_repo, question_repo, user_repo, notification_service)
+
+def get_message_service(
+    conversation_repo: ConversationRepository = Depends(get_conversation_repository),
+    message_repo: MessageRepository = Depends(get_message_repository),
+    user_repo: UserRepository = Depends(get_user_repository),
+    block_repo: UserBlockRepository = Depends(get_user_block_repository)
+) -> MessageService:
+    return MessageService(conversation_repo, message_repo, user_repo, block_repo)
+
+def get_answer_report_service(
+    report_repo: AnswerReportRepository = Depends(get_answer_report_repository),
+    question_repo: QuestionRepository = Depends(get_question_repository)
+) -> AnswerReportService:
+    return AnswerReportService(report_repo, question_repo)
+
 
 def get_auth_service(
     user_repo: UserRepository = Depends(get_user_repository),

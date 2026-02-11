@@ -15,6 +15,7 @@ class User(Base):
     avatar_url = Column(String, nullable=True)
     avatar_content_type = Column(String, nullable=True)
     avatar_size = Column(Integer, nullable=True)
+    only_followers_can_ask = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Questions asked by this user
@@ -78,6 +79,7 @@ class Answer(Base):
     author = relationship("User", back_populates="answers")
     likes = relationship("AnswerLike", back_populates="answer")
     comments = relationship("Comment", back_populates="answer")
+    reports = relationship("AnswerReport", back_populates="answer")
 
 class Comment(Base):
     __tablename__ = "comments"
@@ -102,6 +104,17 @@ class Follow(Base):
     follower = relationship("User", foreign_keys=[follower_id], back_populates="following")
     followed = relationship("User", foreign_keys=[followed_id], back_populates="followers")
 
+class UserBlock(Base):
+    __tablename__ = "user_blocks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    blocker_id = Column(Integer, ForeignKey("users.id"))
+    blocked_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    blocker = relationship("User", foreign_keys=[blocker_id])
+    blocked = relationship("User", foreign_keys=[blocked_id])
+
 class AnswerLike(Base):
     __tablename__ = "answer_likes"
 
@@ -111,6 +124,18 @@ class AnswerLike(Base):
 
     user = relationship("User", back_populates="liked_answers")
     answer = relationship("Answer", back_populates="likes")
+
+class AnswerReport(Base):
+    __tablename__ = "answer_reports"
+
+    id = Column(Integer, primary_key=True, index=True)
+    reporter_id = Column(Integer, ForeignKey("users.id"))
+    answer_id = Column(Integer, ForeignKey("answers.id"))
+    reason = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    reporter = relationship("User")
+    answer = relationship("Answer", back_populates="reports")
 
 
 class PasswordReset(Base):
@@ -136,3 +161,45 @@ class Notification(Base):
     notification_type = Column(String, default="info") # follow, question, answer, like
     
     user = relationship("User", back_populates="notifications")
+
+class Conversation(Base):
+    __tablename__ = "conversations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user1_id = Column(Integer, ForeignKey("users.id"))
+    user2_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user1 = relationship("User", foreign_keys=[user1_id])
+    user2 = relationship("User", foreign_keys=[user2_id])
+    messages = relationship("DirectMessage", back_populates="conversation")
+
+class DirectMessage(Base):
+    __tablename__ = "direct_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    conversation_id = Column(Integer, ForeignKey("conversations.id"))
+    sender_id = Column(Integer, ForeignKey("users.id"))
+    receiver_id = Column(Integer, ForeignKey("users.id"))
+    reply_to_message_id = Column(Integer, ForeignKey("direct_messages.id"), nullable=True)
+    content = Column(Text)
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    conversation = relationship("Conversation", back_populates="messages")
+    sender = relationship("User", foreign_keys=[sender_id])
+    receiver = relationship("User", foreign_keys=[receiver_id])
+    reply_to = relationship("DirectMessage", remote_side=[id])
+    reactions = relationship("MessageReaction", back_populates="message", cascade="all, delete-orphan")
+
+class MessageReaction(Base):
+    __tablename__ = "message_reactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    message_id = Column(Integer, ForeignKey("direct_messages.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    emoji = Column(String)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    message = relationship("DirectMessage", back_populates="reactions")
+    user = relationship("User")

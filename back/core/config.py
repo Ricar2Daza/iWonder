@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     R2_MAX_UPLOAD_BYTES: int = 5000000
     R2_REGION: str = "auto"
 
+    REDIS_URL: Optional[str] = None
+
     class Config:
         env_file = ".env"
 

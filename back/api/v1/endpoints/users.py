@@ -12,9 +12,13 @@ from domain import schemas
 from application.services.user_service import UserService
 from application.services.question_service import QuestionService
 from infrastructure.websockets import manager
+from infrastructure.cache.redis_client import cache_delete, cache_get_json, cache_set_json
 from api import deps
 
 router = APIRouter()
+
+PROFILE_TTL_SECONDS = 30
+SEARCH_TTL_SECONDS = 20
 
 def _get_r2_client():
     return boto3.client(
@@ -78,6 +82,21 @@ def create_user(
 async def read_users_me(current_user: schemas.UserProfile = Depends(deps.get_current_user)):
     return current_user
 
+@router.get("/me/following", response_model=List[schemas.UserProfile])
+def read_users_me_following(
+    skip: int = 0,
+    limit: int = 50,
+    current_user: schemas.UserProfile = Depends(deps.get_current_user),
+    user_service: UserService = Depends(deps.get_user_service)
+):
+    users = user_service.get_following_users(current_user.id, skip=skip, limit=limit)
+    results = []
+    for user in users:
+        user_profile = schemas.UserProfile.model_validate(user)
+        user_profile.is_following = True
+        results.append(user_profile)
+    return results
+
 @router.put("/me", response_model=schemas.UserProfile)
 async def update_user_me(
     user_update: schemas.UserUpdate,
@@ -98,6 +117,7 @@ async def update_user_me(
                 client = _get_r2_client()
                 client.delete_object(Bucket=settings.R2_BUCKET, Key=key)
 
+    cache_delete([f"profile:{current_user.username}"])
     return updated_user
     
 @router.post("/me/avatar/presign", response_model=schemas.AvatarPresignResponse)
@@ -160,7 +180,14 @@ def search_users(
     limit: int = 10, 
     user_service: UserService = Depends(deps.get_user_service)
 ):
-    return user_service.search_users(q, skip, limit)
+    cache_key = f"search_users:{q}:{skip}:{limit}"
+    cached = cache_get_json(cache_key)
+    if cached is not None:
+        return [schemas.UserProfile.model_validate(item) for item in cached]
+    results = user_service.search_users(q, skip, limit)
+    serialized = [schemas.UserProfile.model_validate(item).model_dump() for item in results]
+    cache_set_json(cache_key, serialized, SEARCH_TTL_SECONDS)
+    return results
 
 @router.get("/{username}", response_model=schemas.UserProfile)
 def read_user(
@@ -168,21 +195,26 @@ def read_user(
     user_service: UserService = Depends(deps.get_user_service),
     current_user: Optional[schemas.UserProfile] = Depends(deps.get_current_user_optional)
 ):
+    cache_key = f"profile:{username}"
+    cached = cache_get_json(cache_key)
+    if cached is not None:
+        user_profile = schemas.UserProfile.model_validate(cached)
+        if current_user:
+            user_profile.is_following = user_service.is_following(current_user.id, user_profile.id)
+            user_profile.is_blocked = user_service.is_blocking(current_user.id, user_profile.id)
+        else:
+            user_profile.is_following = False
+        return user_profile
     db_user = user_service.get_user_by_username(username)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    
-    # Use Pydantic's model_validate (V2) to convert SQLAlchemy model to Pydantic model
-    # This avoids RecursionError that happens with jsonable_encoder on circular relationships
     user_profile = schemas.UserProfile.model_validate(db_user)
-    
     if current_user:
-        # Check if current_user follows db_user
-        # db_user.followers is a list of Follow objects, not Users
         user_profile.is_following = any(f.follower_id == current_user.id for f in db_user.followers)
+        user_profile.is_blocked = user_service.is_blocking(current_user.id, user_profile.id)
     else:
         user_profile.is_following = False
-        
+    cache_set_json(cache_key, user_profile.model_dump(), PROFILE_TTL_SECONDS)
     return user_profile
 
 @router.post("/{username}/follow")
@@ -194,12 +226,13 @@ async def follow_user(
     target_user = user_service.get_user_by_username(username)
     if not target_user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+    if user_service.is_blocked_between(current_user.id, target_user.id):
+        raise HTTPException(status_code=403, detail="Blocked")
     try:
         await user_service.follow_user(current_user.id, target_user.id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
+    cache_delete([f"profile:{username}", f"profile:{current_user.username}"])
     return {"status": "ok"}
 
 @router.post("/{username}/unfollow")
@@ -211,9 +244,39 @@ async def unfollow_user(
     target_user = user_service.get_user_by_username(username)
     if not target_user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+    if user_service.is_blocked_between(current_user.id, target_user.id):
+        raise HTTPException(status_code=403, detail="Blocked")
     user_service.unfollow_user(current_user.id, target_user.id)
-    
+    cache_delete([f"profile:{username}", f"profile:{current_user.username}"])
+    return {"status": "ok"}
+
+@router.post("/{username}/block")
+def block_user(
+    username: str,
+    current_user: schemas.UserProfile = Depends(deps.get_current_user),
+    user_service: UserService = Depends(deps.get_user_service)
+):
+    target_user = user_service.get_user_by_username(username)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    try:
+        user_service.block_user(current_user.id, target_user.id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    cache_delete([f"profile:{username}", f"profile:{current_user.username}"])
+    return {"status": "ok"}
+
+@router.post("/{username}/unblock")
+def unblock_user(
+    username: str,
+    current_user: schemas.UserProfile = Depends(deps.get_current_user),
+    user_service: UserService = Depends(deps.get_user_service)
+):
+    target_user = user_service.get_user_by_username(username)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user_service.unblock_user(current_user.id, target_user.id)
+    cache_delete([f"profile:{username}", f"profile:{current_user.username}"])
     return {"status": "ok"}
 
 @router.get("/{username}/answers", response_model=List[schemas.AnswerDisplay])
@@ -221,6 +284,7 @@ def read_user_answers(
     username: str, 
     skip: int = 0, 
     limit: int = 10, 
+    before: str | None = None,
     user_service: UserService = Depends(deps.get_user_service),
     question_service: QuestionService = Depends(deps.get_question_service),
     current_user: Optional[schemas.UserProfile] = Depends(deps.get_current_user_optional)
@@ -230,4 +294,4 @@ def read_user_answers(
         raise HTTPException(status_code=404, detail="User not found")
     
     viewer_id = current_user.id if current_user else None
-    return question_service.get_user_answers(user.id, viewer_id, skip, limit)
+    return question_service.get_user_answers(user.id, viewer_id, skip, limit, before)

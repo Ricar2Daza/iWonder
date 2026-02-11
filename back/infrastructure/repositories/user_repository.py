@@ -30,6 +30,14 @@ class UserRepository:
     def get_all(self, skip: int = 0, limit: int = 10):
         return self.db.query(models.User).offset(skip).limit(limit).all()
 
+    def get_following_users(self, user_id: int, skip: int = 0, limit: int = 50):
+        return self.db.query(models.User).join(
+            models.Follow,
+            models.Follow.followed_id == models.User.id
+        ).filter(
+            models.Follow.follower_id == user_id
+        ).offset(skip).limit(limit).all()
+
     def follow(self, follower_id: int, followed_id: int):
         follow = models.Follow(follower_id=follower_id, followed_id=followed_id)
         self.db.add(follow)

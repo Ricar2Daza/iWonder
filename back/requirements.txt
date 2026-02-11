@@ -13,3 +13,4 @@ alembic
 psycopg2-binary
 fastapi-mail
 boto3
+redis

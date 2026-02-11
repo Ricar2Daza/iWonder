@@ -42,6 +42,7 @@ class User(UserBase):
     avatar_url: Optional[str] = None
     avatar_content_type: Optional[str] = None
     avatar_size: Optional[int] = None
+    only_followers_can_ask: bool = False
     created_at: datetime
 
     class Config:
@@ -63,11 +64,68 @@ class Notification(NotificationBase):
     class Config:
         from_attributes = True
 
+class NotificationGroup(BaseModel):
+    content: str
+    notification_type: str
+    latest_created_at: datetime
+    count: int
+    unread_count: int
+    is_read: bool
+    notification_ids: List[int]
+
+class NotificationReadMany(BaseModel):
+    notification_ids: List[int]
+
+class Conversation(BaseModel):
+    id: int
+    user1_id: int
+    user2_id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class MessageBase(BaseModel):
+    content: str
+
+class MessageCreate(MessageBase):
+    reply_to_message_id: Optional[int] = None
+
+class MessageReactionCreate(BaseModel):
+    emoji: str
+
+class MessageReactionSummary(BaseModel):
+    emoji: str
+    count: int
+
+class Message(MessageBase):
+    id: int
+    conversation_id: int
+    sender_id: int
+    receiver_id: int
+    reply_to_message_id: Optional[int] = None
+    is_read: bool
+    created_at: datetime
+    reactions: List[MessageReactionSummary] = []
+
+    class Config:
+        from_attributes = True
+
+class ConversationSummary(BaseModel):
+    id: int
+    other_user: User
+    last_message: Optional[Message] = None
+
+class ConversationStart(BaseModel):
+    username: Optional[str] = None
+    user_id: Optional[int] = None
+
 class UserUpdate(BaseModel):
     bio: Optional[str] = None
     avatar_url: Optional[str] = None
     avatar_content_type: Optional[str] = None
     avatar_size: Optional[int] = None
+    only_followers_can_ask: Optional[bool] = None
 
 class AvatarPresignRequest(BaseModel):
     filename: str
@@ -86,6 +144,7 @@ class UserProfile(User):
     followers_count: int = 0
     following_count: int = 0
     is_following: Optional[bool] = None
+    is_blocked: Optional[bool] = None
 
     class Config:
         from_attributes = True
@@ -144,6 +203,21 @@ class AnswerDisplay(BaseModel):
     author: User
     likes_count: int = 0
     is_liked: bool = False
+
+    class Config:
+        from_attributes = True
+
+class AnswerReportBase(BaseModel):
+    reason: str
+
+class AnswerReportCreate(AnswerReportBase):
+    pass
+
+class AnswerReport(AnswerReportBase):
+    id: int
+    reporter_id: int
+    answer_id: int
+    created_at: datetime
 
     class Config:
         from_attributes = True

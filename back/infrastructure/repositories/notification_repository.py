@@ -40,3 +40,13 @@ class NotificationRepository:
             models.Notification.is_read == False
         ).update({"is_read": True})
         self.db.commit()
+
+    def mark_many_as_read(self, user_id: int, notification_ids: list[int]):
+        if not notification_ids:
+            return 0
+        result = self.db.query(models.Notification).filter(
+            models.Notification.user_id == user_id,
+            models.Notification.id.in_(notification_ids)
+        ).update({"is_read": True}, synchronize_session=False)
+        self.db.commit()
+        return result
