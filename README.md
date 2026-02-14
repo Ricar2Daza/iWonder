@@ -57,3 +57,32 @@ npm install
 npm run dev
 ```
 El frontend estará disponible en: http://localhost:3000
+
+## Podman
+
+### Requisitos
+- Podman
+- Podman Compose
+
+### Paso a paso
+
+1. Crear el archivo .env en la raíz del proyecto.
+2. Iniciar la máquina de Podman.
+3. Levantar el stack con compose.
+
+Desde la raíz del proyecto:
+
+```bat
+podman machine start
+podman compose -f podman-compose.yml up --build
+```
+
+### Detener servicios
+
+```bat
+podman compose -f podman-compose.yml down
+```
+
+Servicios:
+- Backend: http://127.0.0.1:8000
+- Frontend: http://localhost:3000
